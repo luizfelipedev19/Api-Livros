@@ -9,13 +9,11 @@ class AuthController
 {
 
     private Usuarios $usuarioModel;
-    private Livro $livroModel;
     private JwtHandler $jwtHandler;
 
     public function __construct(PDO $db)
     {
         $this->usuarioModel = new Usuarios($db);
-        $this->livroModel = new Livro($db);
         $this->jwtHandler = new JwtHandler();
     }
 
@@ -35,15 +33,20 @@ class AuthController
             return;
         }
 
+        $uuid = $this->gerarUUIDUsuario();
+
         $criado = $this->usuarioModel->criar(
             $dto->nome,
             $dto->email,
-            $dto->senha_hash);
+            $dto->senha_hash,
+            $uuid);
 
         if ($criado) {
             http_response_code(201);
             echo json_encode(["sucess" => true,
-            "mensagem" => "Usuário criado com sucesso"]);
+            "mensagem" => "Usuário criado com sucesso",
+            "uuid" => $uuid
+            ]);
             return;
         }
 
@@ -57,6 +60,10 @@ class AuthController
         "mensagem" => $e->getMessage()]);
     }
 } 
+
+    private function gerarUUIDUsuario(int $tamanho = 30): string {
+        return substr(bin2hex(random_bytes(20)), 0, $tamanho);
+    }
 
 
 
@@ -78,17 +85,15 @@ class AuthController
         }
 
         $accessToken = $this->jwtHandler->gerarToken($usuario);
-        $refreshToken = $this->jwtHandler->gerarRefreshToken([
-            "id_usuario" => $usuario["id_usuario"]
-        ]);
 
         http_response_code(200);
         echo json_encode([
             "success" => true,
             "mensagem" => "Login realizado com sucesso",
             "access_token" => $accessToken,
-            "refresh_token" => $refreshToken
+            "UUID" => $usuario["UUID"]
         ]);
+
     } catch(Exception $e){
         http_response_code(400);
         echo json_encode([
@@ -97,72 +102,6 @@ class AuthController
         ]);
     }
 }
-
-public function refresh(): void {
-    try{
-        $data = json_decode(file_get_contents("php://input"), true);
-
-
-        $refreshToken = $data["refresh_token"] ?? null;
-
-        if(!$refreshToken){
-            http_response_code(401);
-            echo json_encode([
-                "success" => false,
-                "mensagem" => "Refresh token não enviado"
-            ]);
-            return;
-        }
-
-        $decoded = $this->jwtHandler->validarToken($refreshToken);
-
-        if (($decoded->type ?? null) !== "refresh"){
-            http_response_code(401);
-            echo json_encode([
-                "success" => false,
-                "mensagem" => "Token invalido para renovação"
-            ]);
-            return;
-            }
-
-            $idUsuario = $decoded->data->id_usuario ?? null;
-
-            if (!$idUsuario){
-                http_response_code(401);
-                echo json_encode([
-                    "success" => false, 
-                    "mensagem" => "Refresh token inválido"
-                ]);
-                return;
-            }
-
-            $usuario = $this->usuarioModel->buscarPorId($usuario);
-
-            if(!$usuario){
-                http_response_code(404);
-                echo json_encode(["success" => false,
-                "mensagem" => "Usuario não encontrado"]);
-                return;
-            }
-
-            $novoAcessToken = $this->jwtHandler->gerarToken($usuario);
-
-            http_response_code(200);
-            echo json_encode([
-                "success" => true,
-                "mensagem" => "Access token renovado com sucesso",
-                "access_token" => $novoAcessToken
-            ]);
-
-    } catch(Exception $e){
-        http_response_code(401);
-        echo json_encode([
-            "success" => false, 
-            "mensagem" => "Refresh token inválido ou expirado"
-        ]);
-    }
-}
-
 
     public function perfil()
     {

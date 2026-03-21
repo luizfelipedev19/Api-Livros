@@ -65,42 +65,71 @@ class LivroController{
             return;
         }
 
+        $livroAtual = $this->livroModel->buscarPorId((int) $idLivro, $idUsuario);
+
+        if(!$livroAtual){
+            http_response_code(404);
+            echo json_encode([
+                "success" => false,
+                "mensagem" => "Livro não encontrado"
+            ]);
+            return;
+        }
+
         $data = json_decode(file_get_contents("php://input"), true) ?? [];
         
-        $titulo = trim($data["titulo"] ?? "");
+        $titulo = array_key_exists("titulo", $data) ? trim($data["titulo"]) : $livroAtual['titulo'];
 
-        $autor = trim($data["autor"] ?? "");
-        $ano = (int) ($data["ano"] ?? 0);
+        $autor = array_key_exists("autor", $data) ? trim($data["autor"]) : $livroAtual['autor'];
 
-        if(!$titulo === ''){
+        $ano = array_key_exists("ano", $data) ? (int) $data["ano"] : (int) $livroAtual['ano'];
+
+        if($titulo === ''){
             http_response_code(400);
             echo json_encode([
                 "success" => false,
                 "mensagem" => "Titulo é obrigatório"
             ]);
+            return;
         }
-            if(!$autor === ''){
+            if($autor === ''){
             http_response_code(400);
             echo json_encode([
                 "success" => false,
                 "mensagem" => "Autor é obrigatório"
             ]);
+            return;
         }
-            if(!$ano === ''){
+            if($ano <= 0){
             http_response_code(400);
             echo json_encode([
                 "success" => false,
                 "mensagem" => "Ano é obrigatório"
             ]);
+            return;
         }
 
-        $livros = $this->livroModel->atualizarLivro($titulo, $autor, $ano, (int) $idLivro, $idUsuario);
+        $atualizado = $this->livroModel->atualizarLivro((int) $idLivro, $titulo, $autor, $ano, (int) $idUsuario);
+
+        if(!$atualizado){
+            http_response_code(500);
+            echo json_encode([
+                "success" => false,
+                "mensagem" => "Erro ao atualizar livro"
+            ]);
+            return;
+        }
 
         http_response_code(200);
         echo json_encode([
-            "sucess" => true,
-            "message" => "Livro atualizado com sucesso",
-            "livros" => $livros
+            "success" => true,
+            "mensagem" => "Livro atualizado com sucesso",
+            "livro" => [
+                "id" => (int) $idLivro,
+                "titulo" => $titulo,
+                "autor" => $autor,
+                "ano" => $ano
+            ]
         ]);
     }
 
@@ -143,7 +172,7 @@ class LivroController{
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 10;
 
-        $sort = $_GET['sort'] ?? 'id';
+        $sort = $_GET['sort'] ?? 'id_livro';
         $order = strtolower($_GET['order'] ?? 'asc');
 
         if ($page < 1){
@@ -157,9 +186,9 @@ class LivroController{
             $limit = 100;
         }
 
-        $allowedSort = ['id', 'titulo', 'autor', 'ano'];
+        $allowedSort = ['id_livro', 'titulo', 'autor', 'ano'];
         if (!in_array($sort, $allowedSort, true)){
-            $sort = 'id';
+            $sort = 'id_livro';
         }
 
         if(!in_array($order, ['asc', 'desc'], true)) {

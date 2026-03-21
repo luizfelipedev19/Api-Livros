@@ -23,38 +23,30 @@ return [
     ],
     [
         "method" => "POST",
-        "path" => "/refresh",
-        "controller" => "AuthController",
-        "action" => "refresh", 
-        "auth" => false
-    ],
-
-    [
-        "method" => "POST",
         "path" => "/livros",
         "controller" => "LivroController",
-        "action" => "create",
+        "action" => "criarLivro",
         "auth" => true,
     ],
     [
         "method" => "GET",
         "path" => "/livros",
         "controller" => "LivroController",
-        "action" => "show",
+        "action" => "listarLivros",
         "auth" => true
     ],
     [
     "method" => "PUT",
     "path" => "/livro",
     "controller" => "LivroController",
-    "action" => "update",
+    "action" => "atualizarLivro",
     "auth" => true
     ],
     [
     "method" => "DELETE",
     "path" => "/livro",
     "controller" => "LivroController",
-    "action" => "delete",
+    "action" => "deletarLivro",
     "auth" => true
     ],
 ];

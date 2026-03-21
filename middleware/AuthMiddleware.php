@@ -8,13 +8,29 @@ class AuthMiddleware
     {
 
         $headers = function_exists('getallheaders') ? getallheaders() : [];
-        $authHeader = $headers["Authorization"] ?? $headers["authorization"] ?? null;
+        $authHeader = $headers["Authorization"] 
+        ?? $headers["authorization"] 
+        ?? $_SERVER["HTTP_AUTHORIZATION"]
+        ?? $_SERVER["REDIRECT_HTTP_AUTHORIZATION"]
+        ?? null;
+
+        $uuidHeader = $headers["X-User-UUID"]
+        ?? $headers["x-user-uuid"]
+        ?? $_SERVER["HTTP_X_USER_UUID"]
+        ?? null;
 
         if (!$authHeader || !str_starts_with($authHeader, "Bearer ")) {
             http_response_code(401);
-            echo json_encode(["menagem" => "Token não enviado"]);
+            echo json_encode(["mensagem" => "Token não enviado"]);
             exit;
         }
+
+        if(!$uuidHeader){
+            http_response_code(401);
+            echo json_encode(["mensagem" => "UUID do usuário não enviado"]);
+            exit;
+        }
+
         $token = str_replace("Bearer ", "", $authHeader);
 
         try {
@@ -24,6 +40,19 @@ class AuthMiddleware
             if(($decoded->type ?? null) !== "access"){
                 http_response_code(401);
                 echo json_encode(["mensagem" => "Token inválido para acesso"]);
+                exit;
+            }
+
+            $uuidToken = $decoded->data->UUID ?? null;
+            if(!$uuidToken){
+                http_response_code(401);
+                echo json_encode(["mensagem" => "UUID não encontrado no token"]);
+                exit;
+            }
+
+            if($uuidToken !== $uuidHeader){
+                http_response_code(403);
+                echo json_encode(["mensagem" => "UUID não corresponde ao usuário autenticado"]);
                 exit;
             }
 

@@ -20,32 +20,21 @@ class JwtHandler
 
     public function gerarToken(array $usuario): string
     {
+
+    //removi o exp do token
         $payload = [
             "iss" => $this->iss,
             "type" => "access",
             "iat" => time(),
-            "exp" => time() + (60 * 15),
             "data" => [
                 "id_usuario" => $usuario["id_usuario"],
                 "nome" => $usuario["nome"],
-                "email" => $usuario["email"]
+                "email" => $usuario["email"],
+                "UUID" => $usuario["UUID"]
             ]
         ];
 
         return JWT::encode($payload, $this->secret, $this->alg);
-    }
-
-    public function gerarRefreshToken(array $dados): string {
-
-    $payload = [
-        "iss" => $this->iss,
-        "type" => "refresh",
-        "iat" => time(),
-        "exp" => time() + (60 * 60 * 24 * 7),
-        "data" => $dados
-    ];
-
-    return JWT::encode($payload, $this->secret, $this->alg);
     }
 
     public function validarToken(string $token): object
