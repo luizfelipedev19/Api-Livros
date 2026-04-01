@@ -76,5 +76,26 @@ return [
     "controller" => "SenhaController",
     "action" => "redefinirSenha",
     "auth" => false
-    ]
+    ],
+    [
+    "method" => "PUT",
+    "path" => "/usuario/editar",
+    "controller" => "UsuarioController",
+    "action" => "editarUsuarioLogado",
+    "auth" => true
+    ],
+    [
+    "method" => "DELETE",
+    "path" => "/usuario/deletar",
+    "controller" => "UsuarioController",
+    "action" => "deletarUsuario",
+    "auth" => true
+    ],
+    [
+    "method" => "GET",
+    "path" => "/usuario",
+    "controller" => "UsuarioController",
+    "action" => "listarUsuario",
+    "auth" => true
+    ],
 ];

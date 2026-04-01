@@ -64,33 +64,64 @@ class Usuarios
     public function editarUsuario(
         int $id_usuario,
         string $uuid,
-        string $nome,
-        string $email
+        array $dados
     ): bool {
 
-        $updated_at = date('Y-m-d H:i:s');
+        $campos = [];
+        $params = [];
 
-        $query = "UPDATE {$this->table} SET
-        nome = :nome,
-        email = :email,
-        updated_at = :updated_at
-        WHERE id_usuario = :id_usuario
-        AND uuid = :uuid";
+        if(isset($dados['nome'])){
+            $campos[] = "nome = :nome";
+            $params[':nome'] = $dados['nome'];
+        }
 
+        if(isset($dados['email'])){
+            $campos[] = "email = :email";
+            $params[':email'] = $dados['email'];
+        }
 
+        if(empty($campos)){
+            return false;
+        }
+
+        $campos[] = "updated_at = :updated_at";
+        $params[':updated_at'] = date('Y-m-d H:i:s');
+       
+        $query = "UPDATE {$this->table} SET " . implode(', ', $campos) . "
+        WHERE id_usuario = :id_usuario AND UUID = :uuid"; 
         $stmt = $this->conn->prepare($query);
 
+        foreach($params as $key => $value){
+            $stmt->bindValue($key, $value);
+        }
+
         $stmt->bindValue(":id_usuario", $id_usuario, PDO::PARAM_INT);
-        $stmt->bindValue(":nome", $nome);
-        $stmt->bindValue(":email", $email);
-        $stmt->bindValue(":uuid", $uuid, PDO::PARAM_STR);
-        $stmt->bindValue(":updated_at", $updated_at);
+            $stmt->bindValue(":uuid", $uuid, PDO::PARAM_STR);
 
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
 
 
+    }
+
+    function deletarUsuario($idUsuario): bool
+    {
+        $query = "delete from {$this->table} where id_usuario = :id_usuario";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(":id_usuario", $idUsuario, PDO::PARAM_INT);
+        return $stmt->execute();
+        return $stmt->rowCount() > 0;
+
+    }
+
+    function listarUsuario(string $uuid): array {
+        $query = "select id_usuario, nome, email from {$this->table} where uuid = :uuid limit 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(":uuid", $uuid, PDO::PARAM_STR);
+        $stmt->execute();
+        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $usuario ?: [];
     }
 
 }
