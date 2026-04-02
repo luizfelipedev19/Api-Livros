@@ -67,7 +67,7 @@ class Livro {
     public function listarPorUsuario(string $uuid): array {
         $query = "SELECT id_livro, titulo, autor, ano
                   FROM {$this->table}
-                  WHERE usuario_id = (SELECT id_usuario from usuarios where UUID = : uuid)
+                  WHERE usuario_id = (SELECT id_usuario from usuarios where UUID = :uuid)
                   ORDER BY id_livro DESC";
 
         $stmt = $this->conn->prepare($query);
@@ -221,7 +221,7 @@ class Livro {
             $stmtCount->bindValue(
                 $key,
                 $value,
-                ($key === ':uuid' || $key === ':ano') ? PDO::PARAM_INT : PDO::PARAM_STR
+                ($key === ':uuid' || $key === ':ano') ? PDO::PARAM_STR : PDO::PARAM_INT
             );
         }
 

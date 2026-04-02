@@ -28,7 +28,7 @@ class AuthController
 
         if ($usuarioExistente) {
             http_response_code(409);
-            echo json_encode(["Sucess" => "false",
+            echo json_encode(["success" => "false",
                 "mensagem" => "Email já cadastrado"]);
             return;
         }
@@ -43,19 +43,19 @@ class AuthController
 
         if ($criado) {
             http_response_code(201);
-            echo json_encode(["sucess" => true,
+            echo json_encode(["success" => true,
             "mensagem" => "Usuário criado com sucesso",
             ]);
             return;
         }
 
         http_response_code(500);
-        echo json_encode(["sucess" => "false",
+        echo json_encode(["success" => "false",
             "mensagem" => "Erro ao cadastrar usuário"]);
 
     } catch(Exception $e){
         http_response_code(400);
-        echo json_encode(["sucess" => false,
+        echo json_encode(["success" => false,
         "mensagem" => $e->getMessage()]);
         
     }
@@ -79,7 +79,7 @@ class AuthController
 
         if (!$usuario || !password_verify($dto->senha, $usuario["senha_hash"])) {
             http_response_code(401);
-            echo json_encode(["sucess" => false,
+            echo json_encode(["success" => false,
              "mensagem" => "Email ou senha inválidos"]);
             return;
         }
@@ -100,7 +100,7 @@ class AuthController
     } catch(Exception $e){
         http_response_code(400);
         echo json_encode([
-            "sucess" => false,
+            "success" => false,
             "mensagem" => $e->getMessage()
         ]);
     }
@@ -122,6 +122,7 @@ class AuthController
         $idUsuario = $usuario->data->id_usuario;
 
         echo json_encode([
+            "success" => true,
             "mensagem" => "Perfil acessado com sucesso",
             "id_usuario" => $idUsuario,
             "usuario" => $usuario->data
