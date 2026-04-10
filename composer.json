@@ -18,6 +18,6 @@
     ]
   },
   "scripts": {
-    "swagger": "vendor/bin/openapi -b vendor/autoload.php controllers config -o swagger.yaml"
+    "swagger": "vendor/bin/openapi -b vendor/autoload.php controllers config/docs -o swagger.yaml"
   }
 }

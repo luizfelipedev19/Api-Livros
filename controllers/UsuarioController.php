@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/../models/Usuarios.php';
 require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 require_once __DIR__ . '/../utils/verificarEmail.php';
@@ -25,50 +26,24 @@ class UsuarioController extends BaseController
         security: [["bearerAuth" => []]],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(
-                required: ["url_foto"],
-                properties: [
-                    new OA\Property(
-                        property: "url_foto",
-                        type: "string",
-                        format: "uri",
-                        example: "https://meusite.com/imagens/foto.jpg"
-                    )
-                ]
-            )
+            content: new OA\JsonContent(ref: "#/components/schemas/UsuarioFotoRequest")
         ),
         responses: [
             new OA\Response(
                 response: 200,
-                description: "Foto de perfil atualizada com sucesso",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Foto de perfil atualizada com sucesso"),
-                        new OA\Property(property: "foto_perfil", type: "string", format: "uri", example: "https://meusite.com/imagens/foto.jpg")
-                    ]
-                )
+                description: "Foto atualizada",
+                content: new OA\JsonContent(ref: "#/components/schemas/UsuarioFotoResponse")
             ),
             new OA\Response(
                 response: 400,
-                description: "URL ausente ou inválida",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "A URL da foto é inválida")
-                    ]
-                )
+                description: "URL inválida",
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             ),
-            new OA\Response(
-                response: 401,
-                description: "Não autenticado"
-            ),
+            new OA\Response(response: 401, description: "Não autenticado"),
             new OA\Response(
                 response: 500,
-                description: "Erro ao atualizar a foto de perfil",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Erro ao atualizar a foto de perfil")
-                    ]
-                )
+                description: "Erro interno",
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             )
         ]
     )]
@@ -109,51 +84,24 @@ class UsuarioController extends BaseController
         security: [["bearerAuth" => []]],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: "nome", type: "string", example: "Luiz Felipe"),
-                    new OA\Property(property: "email", type: "string", format: "email", example: "luiz@email.com")
-                ]
-            )
+            content: new OA\JsonContent(ref: "#/components/schemas/UsuarioUpdateRequest")
         ),
         responses: [
             new OA\Response(
                 response: 200,
-                description: "Usuário atualizado com sucesso",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Usuario atualizado com sucesso"),
-                        new OA\Property(
-                            property: "usuario",
-                            type: "object",
-                            properties: [
-                                new OA\Property(property: "id_usuario", type: "integer", example: 1)
-                            ]
-                        )
-                    ]
-                )
+                description: "Usuário atualizado",
+                content: new OA\JsonContent(ref: "#/components/schemas/UsuarioUpdateResponse")
             ),
-            new OA\Response(
-                response: 401,
-                description: "Não autenticado"
-            ),
+            new OA\Response(response: 401, description: "Não autenticado"),
             new OA\Response(
                 response: 409,
-                description: "E-mail já está em uso por outro usuário",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "O email ja esta em uso por outro usuario")
-                    ]
-                )
+                description: "Email já em uso",
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             ),
             new OA\Response(
                 response: 500,
-                description: "Erro ao atualizar usuário",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Erro ao atualizar usuário")
-                    ]
-                )
+                description: "Erro interno",
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             )
         ]
     )]
@@ -196,25 +144,14 @@ class UsuarioController extends BaseController
         responses: [
             new OA\Response(
                 response: 200,
-                description: "Usuário deletado com sucesso",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Usuário deletado com sucesso")
-                    ]
-                )
+                description: "Usuário deletado",
+                content: new OA\JsonContent(ref: "#/components/schemas/UsuarioDeleteResponse")
             ),
-            new OA\Response(
-                response: 401,
-                description: "Não autenticado"
-            ),
+            new OA\Response(response: 401, description: "Não autenticado"),
             new OA\Response(
                 response: 500,
-                description: "Erro ao deletar usuário",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Erro ao deletar usuário")
-                    ]
-                )
+                description: "Erro interno",
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             )
         ]
     )]
@@ -244,29 +181,13 @@ class UsuarioController extends BaseController
             new OA\Response(
                 response: 200,
                 description: "Usuário encontrado",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Usuário encontrado"),
-                        new OA\Property(
-                            property: "usuario",
-                            type: "object",
-                            additionalProperties: true
-                        )
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/UsuarioListResponse")
             ),
-            new OA\Response(
-                response: 401,
-                description: "Não autenticado"
-            ),
+            new OA\Response(response: 401, description: "Não autenticado"),
             new OA\Response(
                 response: 404,
                 description: "Usuário não encontrado",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Usuário não encontrado")
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             )
         ]
     )]
@@ -282,7 +203,6 @@ class UsuarioController extends BaseController
             return;
         }
 
-        http_response_code(200);
         $this->success([
             "mensagem" => "Usuário encontrado",
             "usuario" => $dadosUsuario

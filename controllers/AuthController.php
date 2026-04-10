@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/../models/Usuarios.php';
 require_once __DIR__ . '/../models/Livro.php';
 require_once __DIR__ . '/../utils/jwt.php';
@@ -27,57 +28,23 @@ class AuthController extends BaseController
         tags: ["Auth"],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(
-                required: ["nome", "email", "senha"],
-                properties: [
-                    new OA\Property(
-                        property: "nome",
-                        type: "string",
-                        maxLength: 255,
-                        example: "Luiz Felipe"
-                    ),
-                    new OA\Property(
-                        property: "email",
-                        type: "string",
-                        format: "email",
-                        example: "teste@email.com"
-                    ),
-                    new OA\Property(
-                        property: "senha",
-                        type: "string",
-                        format: "password",
-                        example: "12345678Ab@"
-                    )
-                ]
-            )
+            content: new OA\JsonContent(ref: "#/components/schemas/RegisterRequest")
         ),
         responses: [
             new OA\Response(
                 response: 201,
                 description: "Usuário registrado com sucesso",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Usuário registrado com sucesso")
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/RegisterResponse")
             ),
             new OA\Response(
                 response: 400,
                 description: "Dados inválidos ou email já cadastrado",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Email já cadastrado")
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             ),
             new OA\Response(
                 response: 500,
                 description: "Erro interno ao cadastrar usuário",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Erro ao cadastrar usuário")
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             )
         ]
     )]
@@ -126,56 +93,23 @@ class AuthController extends BaseController
         tags: ["Auth"],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(
-                required: ["email", "senha"],
-                properties: [
-                    new OA\Property(
-                        property: "email",
-                        type: "string",
-                        format: "email",
-                        example: "teste@email.com"
-                    ),
-                    new OA\Property(
-                        property: "senha",
-                        type: "string",
-                        format: "password",
-                        example: "12345678Ab@"
-                    )
-                ]
-            )
+            content: new OA\JsonContent(ref: "#/components/schemas/LoginRequest")
         ),
         responses: [
             new OA\Response(
                 response: 200,
                 description: "Login realizado com sucesso",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Login realizado com sucesso"),
-                        new OA\Property(property: "access_token", type: "string", example: "jwt_aqui"),
-                        new OA\Property(property: "UUID", type: "string", example: "e04230085f34fcdc518137ac826725"),
-                        new OA\Property(property: "nome", type: "string", example: "Luiz Felipe"),
-                        new OA\Property(property: "email", type: "string", format: "email", example: "teste@email.com"),
-                        new OA\Property(property: "foto_perfil", type: "string", nullable: true, example: null)
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/LoginResponse")
             ),
             new OA\Response(
                 response: 400,
                 description: "Erro de validação na requisição",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Dados inválidos")
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             ),
             new OA\Response(
                 response: 401,
                 description: "Credenciais inválidas",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Email ou senha inválidos")
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             )
         ]
     )]
@@ -216,32 +150,12 @@ class AuthController extends BaseController
             new OA\Response(
                 response: 200,
                 description: "Perfil acessado com sucesso",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "success", type: "boolean", example: true),
-                        new OA\Property(property: "mensagem", type: "string", example: "Perfil acessado com sucesso"),
-                        new OA\Property(property: "id_usuario", type: "integer", example: 1),
-                        new OA\Property(
-                            property: "usuario",
-                            type: "object",
-                            properties: [
-                                new OA\Property(property: "id_usuario", type: "integer", example: 1),
-                                new OA\Property(property: "UUID", type: "string", example: "e04230085f34fcdc518137ac826725"),
-                                new OA\Property(property: "nome", type: "string", example: "Luiz Felipe"),
-                                new OA\Property(property: "email", type: "string", format: "email", example: "teste@email.com")
-                            ]
-                        )
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/PerfilResponse")
             ),
             new OA\Response(
                 response: 401,
                 description: "Token ausente, inválido ou sem permissão",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "mensagem", type: "string", example: "Token inválido para acesso")
-                    ]
-                )
+                content: new OA\JsonContent(ref: "#/components/schemas/ErrorResponse")
             )
         ]
     )]

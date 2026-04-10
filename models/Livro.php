@@ -162,6 +162,7 @@ class Livro {
         return $stmt->rowCount() > 0;
     }
 
+    /*
     public function listarComFiltros(
         string $uuid,
         string $titulo = '',
@@ -257,100 +258,132 @@ class Livro {
             'total_pages' => (int) ceil($total / $limit)
         ];
     }
+        */
 
-    public function encontrarLivro($data, string $uuid): array {
-        $where = "WHERE usuario_id = (Select id_usuario from usuarios where UUID = :uuid)";
-        $params = [':uuid' => $uuid];
+    public function encontrarLivro(
+    $data,
+    string $uuid,
+    int $page = 1,
+    int $limit = 4
+): array {
+    $page = max(1, $page);
+    $limit = max(1, $limit);
+    $offset = ($page - 1) * $limit;
 
-        // Normalize incoming $data: accept JSON string, object or array
-        if (is_string($data)) {
-            $decoded = json_decode($data, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $data = $decoded;
-            }
+    $where = "WHERE usuario_id = (SELECT id_usuario FROM usuarios WHERE UUID = :uuid)";
+    $params = [':uuid' => $uuid];
+
+    // Aceita JSON string, object ou array
+    if (is_string($data)) {
+        $decoded = json_decode($data, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $data = $decoded;
         }
+    }
 
-        if (is_object($data)) {
-            $data = (array)$data;
+    if (is_object($data)) {
+        $data = (array) $data;
+    }
+
+    // Se vier objeto associativo único, transforma em lista
+    if (is_array($data)) {
+        $isAssoc = array_keys($data) !== range(0, count($data) - 1);
+        if ($isAssoc) {
+            $data = [$data];
         }
+    }
 
-        // If decoded/received array is associative (single filter object), wrap it into a list
-        if (is_array($data)) {
-            $isAssoc = array_keys($data) !== range(0, count($data) - 1);
-            if ($isAssoc) {
-                $data = [$data];
-            }
-        }
+    if (is_array($data) && !empty($data)) {
+        $allowed = ['id_livro', 'titulo', 'autor', 'ano', 'genero', 'status', 'avaliacao', 'anotacoes'];
+        $conds = [];
+        $i = 0;
 
-        if (is_array($data) && !empty($data)) {
-            $allowed = ['id_livro', 'titulo', 'autor', 'ano', 'genero', 'status', 'avaliacao', 'anotacoes'];
-            $conds = [];
-            $i = 0;
+        foreach ($data as $item) {
+            $entry = is_object($item) ? (array) $item : (array) $item;
 
-            
-            //tarefa para semana que vem, adicionar a paginação dentro desse endpoint.
-            foreach ($data as $item) {
-                $entry = is_object($item) ? (array)$item : (array)$item;
-               
-                foreach ($entry as $key => $value) {
-                    $key = trim((string)$key);
-                    if ($value === null || $value === '') {
-                        continue;
-                    }
-                    if (!in_array($key, $allowed, true)) {
-                        continue;
-                    }
+            foreach ($entry as $key => $value) {
+                $key = trim((string) $key);
 
-                    $param = ":p{$i}";
-                    if ($key === 'ano' || $key === 'avaliacao') {
-                        // numeric fields use exact match
-                        $conds[] = "{$key} = {$param}";
-                        $params[$param] = (int) $value;
-                    } else {
-                        // use LIKE for string fields
-                        $conds[] = "{$key} LIKE {$param}";
-                        $params[$param] = '%' . $value . '%';
-
-                        //Entre as duas porcentagens, ele faz uma busca completa. Se mandar livro = ceu, ele vai encontrar "O céu é azul", "Céu estrelado", "Céu e inferno", etc. Se mandar livro = ceu%, ele vai encontrar "Céu é azul", "Céu estrelado", mas não "O céu é azul". Se mandar livro = %ceu, ele vai encontrar "O céu é azul", mas não "Céu estrelado". Se mandar livro = ceu, ele vai encontrar apenas "Céu".
-                    }
-                    $i++;
+                if ($value === null || $value === '') {
+                    continue;
                 }
-            }
 
-            if (!empty($conds)) {
-                $where .= ' AND ' . implode(' AND ', $conds);
+                if (!in_array($key, $allowed, true)) {
+                    continue;
+                }
+
+                $param = ":p{$i}";
+
+                // Campos numéricos com comparação exata
+                if (in_array($key, ['id_livro', 'ano', 'avaliacao'], true)) {
+                    $conds[] = "{$key} = {$param}";
+                    $params[$param] = (int) $value;
+                } else {
+                    // Campos texto com LIKE
+                    $conds[] = "{$key} LIKE {$param}";
+                    $params[$param] = '%' . $value . '%';
+                }
+
+                $i++;
             }
         }
 
-        $query = "SELECT id_livro, titulo, autor, ano, genero, status, avaliacao, anotacoes
-                  FROM {$this->table}
-                  {$where}";
+        if (!empty($conds)) {
+            $where .= ' AND ' . implode(' AND ', $conds);
+        }
+    }
 
-        $stmt = $this->conn->prepare($query);
+    // Conta total de registros
+    $queryCount = "SELECT COUNT(*) AS total
+                   FROM {$this->table}
+                   {$where}";
 
-        foreach ($params as $key => $val) {
-            if ($val === null) {
-                $stmt->bindValue($key, null, PDO::PARAM_NULL);
-                continue;
-            }
+    $stmtCount = $this->conn->prepare($queryCount);
 
-            if (is_int($val)) {
-                $stmt->bindValue($key, $val, PDO::PARAM_INT);
-                continue;
-            }
+    foreach ($params as $key => $val) {
+        if (is_int($val)) {
+            $stmtCount->bindValue($key, $val, PDO::PARAM_INT);
+        } else {
+            $stmtCount->bindValue($key, $val, PDO::PARAM_STR);
+        }
+    }
 
-            // If parameter name indicates numeric but value came as string, try cast when numeric
-            if ((($key === ':ano' || $key === ':avaliacao') || strpos($key, ':p') === 0) && is_numeric($val)) {
-                $stmt->bindValue($key, (int) $val, PDO::PARAM_INT);
-                continue;
-            }
+    $stmtCount->execute();
+    $total = (int) $stmtCount->fetch(PDO::FETCH_ASSOC)['total'];
 
+    // Busca paginada
+    $query = "SELECT id_livro, titulo, autor, ano, genero, status, avaliacao, anotacoes
+              FROM {$this->table}
+              {$where}
+              ORDER BY id_livro DESC
+              LIMIT :limit OFFSET :offset";
+
+    $stmt = $this->conn->prepare($query);
+
+    foreach ($params as $key => $val) {
+        if (is_int($val)) {
+            $stmt->bindValue($key, $val, PDO::PARAM_INT);
+        } else {
             $stmt->bindValue($key, $val, PDO::PARAM_STR);
         }
-        $livro = $stmt->execute();
-        $livro = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $livro = $livro ?: [];
-        return $livro;
     }
+
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    $livros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    return [
+        'livros' => $livros ?: [],
+        'paginacao' => [
+            'page' => $page,
+            'limit' => $limit,
+            'total' => $total,
+            'total_pages' => (int) ceil($total / $limit)
+        ]
+    ];
+}
 // ...existing code...
 }
