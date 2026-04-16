@@ -1,0 +1,40 @@
+# Requisitos e dependências do projeto API Livros
+
+Linguagem:
+PHP 8.2
+
+Framework:
+Nenhum framework PHP identificado. O projeto usa arquitetura própria com Composer.
+
+Dependências Composer:
+firebase/php-jwt:^7.0
+vlucas/phpdotenv:^5.6
+phpmailer/phpmailer:^7.0
+zircote/swagger-php:^6.1
+symfony/console:^7.4
+
+Extensões PHP necessárias:
+pdo
+pdo_mysql
+mysqli
+
+Infraestrutura necessária:
+Apache
+MySQL 8.0
+Composer
+Docker
+Docker Compose
+phpMyAdmin (opcional)
+
+Variáveis de ambiente exigidas:
+DB_HOST
+DB_PORT
+DB_NAME
+DB_USER
+DB_PASSWORD
+JWT_SECRET
+JWT_ALG
+JWT_EXP
+JWT_ISS
+MAIL_USER
+MAIL_PASS
